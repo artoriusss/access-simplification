@@ -1,7 +1,8 @@
 import subprocess
 import os, json, time
 
-from inference.utils.utils import write_sentence_pairs
+from simplify.utils.utils import write_sentence_pairs
+from simplify.utils.paths import INUPT_FILE
 
 if __name__ == '__main__':
     sentence_pairs = []
@@ -12,9 +13,7 @@ if __name__ == '__main__':
         if not complex_sentence:
             break
 
-        input_file = 'inference/temp/original.txt'
-
-        with open(input_file, 'w') as infile:
+        with open(INPUT_FILE, 'w') as infile:
             infile.write(complex_sentence)
         print('Working on it...')
 
@@ -28,7 +27,7 @@ if __name__ == '__main__':
             print('Simplified sentence:', simplified_sentence)
             sentence_pair = {'original': complex_sentence, 'simple': simplified_sentence}
             sentence_pairs.append(sentence_pair)
-            os.remove(input_file)
+            os.remove(INPUT_FILE)
 
         if input('Do you want to continue? (y/n): ') == 'n':
             break

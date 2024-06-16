@@ -2,7 +2,9 @@ import json
 import os
 import time
 from psycopg2 import sql
+
 from db.connect import connect, commit_and_close
+from simplify.utils.paths import UNLABELED_DIR
 
 def insert_pairs(sentence_pairs, schema='unlabeled'):
     conn, cur = connect()
@@ -37,7 +39,8 @@ def write_sentence_pairs(sentence_pairs):
         print('Error inserting pairs:', e)
         print('Writing to local directory...')
         timestamp = int(time.time())
-        os.makedirs('inference/unlabelled', exist_ok=True)
-        with open(f'inference/unlabelled/simplified_{timestamp}.json', 'w') as outfile:
+        os.makedirs(UNLABELED_DIR, exist_ok=True)
+        path = os.path.join(UNLABELED_DIR, f'simplified_{timestamp}.json')
+        with open(path, 'w') as outfile:
             json.dump(sentence_pairs, outfile, indent=4)
-        print(f'Wrote to inference/unlabelled/simplified_{timestamp}.json')
+        print(f'Wrote to simplify/unlabelled/simplified_{timestamp}.json')
