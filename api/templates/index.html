@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Sentence Simplifier</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .container {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 600px;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        label {
+            font-weight: bold;
+            margin-top: 10px;
+            display: block;
+            color: #333;
+        }
+        textarea {
+            width: calc(100% - 20px);
+            margin: 10px 0;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        button {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-bottom: 10px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Sentence Simplifier</h1>
+        <form method="POST">
+            <label for="complex_sentence">Enter the complex sentence:</label>
+            <textarea name="complex_sentence" id="complex_sentence" rows="4"></textarea>
+            <button type="submit">Simplify</button>
+        </form>
+
+        {% if simplified_sentence %}
+            <h2>Simplified Sentence</h2>
+            <p><strong>Original:</strong> {{ complex_sentence }}</p>
+            <p><strong>Simplified:</strong> {{ simplified_sentence }}</p>
+        {% endif %}
+    </div>
+</body>
+</html>
