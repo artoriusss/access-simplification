@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Annotate</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .container {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 600px;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        label {
+            font-weight: bold;
+            margin-top: 10px;
+            display: block;
+            color: #333;
+        }
+        textarea {
+            width: calc(100% - 20px);
+            margin: 10px 0;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        .annotation-group {
+            margin-top: 20px;
+        }
+        .radio-group {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 10px;
+        }
+        .radio-group label {
+            font-weight: normal;
+        }
+        button {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-bottom: 10px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .reset-btn {
+            background-color: #dc3545;
+        }
+        .reset-btn:hover {
+            background-color: #c82333;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Annotate the Simplified Sentence</h1>
+        <form method="POST">
+            <input type="hidden" name="_id" value="{{ id_ }}">
+            <label for="original">Original:</label>
+            <textarea name="original" id="original" rows="4" readonly>{{ original }}</textarea>
+            
+            <label for="simplified">Simplified:</label>
+            <textarea name="simplified" id="simplified" rows="4" readonly>{{ simplified }}</textarea>
+
+            <div class="annotation-group">
+                <label>Does the simplified form look good?</label>
+                <div class="radio-group">
+                    <input type="radio" id="yes" name="annotation" value="yes" required>
+                    <label for="yes">Yes</label>
+                    <input type="radio" id="no" name="annotation" value="no">
+                    <label for="no">No</label>
+                </div>
+            </div>
+            
+            <label for="rewrite">If No, please rewrite:</label>
+            <textarea name="rewrite" id="rewrite" rows="4"></textarea>
+            
+            <button type="submit">Submit</button>
+        </form>
+        
+        <form action="{{ url_for('annotate.reset') }}" method="get">
+            <button type="submit" class="reset-btn">Reset Annotations</button>
+        </form>
+    </div>
+</body>
+</html>

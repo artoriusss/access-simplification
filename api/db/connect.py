@@ -1,4 +1,5 @@
 import psycopg2
+from psycopg2 import sql
 from dotenv import load_dotenv
 import os
 
@@ -18,3 +19,13 @@ def commit_and_close(connection, cursor):
     connection.commit()
     cursor.close()
     connection.close()
+
+def query(schema='unlabeled'):
+    connection, cursor = connect()
+    select_query = sql.SQL("SELECT * FROM {}.data").format(sql.Identifier(schema))
+    cursor.execute(select_query)
+    rows = cursor.fetchall()
+    result = []
+    for row in rows:
+        result.append({'id': row[0], 'original': row[1], 'simplified': row[2]})
+    return result
