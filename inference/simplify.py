@@ -1,8 +1,8 @@
 import subprocess
 import os, json, time
 
-from simplify.utils.utils import write_sentence_pairs
-from simplify.utils.paths import INUPT_FILE
+from inference.utils.utils import write_sentence_pairs
+from inference.utils.paths import INPUT_FILE
 
 if __name__ == '__main__':
     sentence_pairs = []

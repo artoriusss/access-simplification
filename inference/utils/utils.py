@@ -4,7 +4,7 @@ import time
 from psycopg2 import sql
 
 from db.connect import connect, commit_and_close
-from simplify.utils.paths import UNLABELED_DIR
+from inference.utils.paths import UNLABELED_DIR
 
 def insert_pairs(sentence_pairs, schema='unlabeled'):
     conn, cur = connect()
