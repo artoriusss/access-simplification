@@ -1,7 +1,9 @@
 *.pyc
 *.swp
+.env
 .venv
 *.egg-info
 .pytest_cache
 .nfs*
 experiments
+unlabelled
