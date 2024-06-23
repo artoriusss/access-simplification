@@ -1,0 +1,9 @@
+name: ts
+channels:
+  - conda-forge
+dependencies:
+  - python=3.6
+  - flask==2.0.3
+  - numpy==1.19.5
+  - pandas==1.1.5
+  - pip  
