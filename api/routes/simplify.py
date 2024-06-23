@@ -6,7 +6,6 @@ simplify_bp = Blueprint('simplify', __name__)
 
 @simplify_bp.route('/', methods=['GET', 'POST'])
 def index():
-    print("Index route hit")
     if request.method == 'POST':
         complex_sentence = request.form['complex_sentence']
         print(f"Received complex sentence: {complex_sentence}")
