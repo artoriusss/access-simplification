@@ -43,41 +43,34 @@
         .annotation-group {
             margin-top: 20px;
         }
-        .radio-group {
+        .btn-group {
             display: flex;
             justify-content: space-between;
             margin-top: 10px;
         }
-        .radio-group label {
-            font-weight: normal;
-        }
-        button {
-            display: block;
-            width: 100%;
+        .btn-group button {
+            width: 32%;
             padding: 10px;
             background-color: #007bff;
             color: white;
             border: none;
             border-radius: 4px;
             cursor: pointer;
-            margin-bottom: 10px;
         }
-        button:hover {
+        .btn-group button:hover {
             background-color: #0056b3;
         }
-        .reset-btn {
-            background-color: #dc3545;
-        }
-        .reset-btn:hover {
-            background-color: #c82333;
+        .hidden {
+            display: none;
         }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>Annotate the Simplified Sentence</h1>
-        <form method="POST">
+        <form method="POST" id="annotation-form">
             <input type="hidden" name="_id" value="{{ id_ }}">
+            <input type="hidden" name="annotation" id="annotation">
             <label for="original">Original:</label>
             <textarea name="original" id="original" rows="4" readonly>{{ original }}</textarea>
             
@@ -86,23 +79,49 @@
 
             <div class="annotation-group">
                 <label>Does the simplified form look good?</label>
-                <div class="radio-group">
-                    <input type="radio" id="yes" name="annotation" value="yes" required>
-                    <label for="yes">Yes</label>
-                    <input type="radio" id="no" name="annotation" value="no">
-                    <label for="no">No</label>
+                <div class="btn-group">
+                    <button type="button" id="yes-btn">Yes</button>
+                    <button type="button" id="no-btn">No</button>
+                    <button type="button" id="skip-btn">Skip</button>
                 </div>
             </div>
             
-            <label for="rewrite">If No, please rewrite:</label>
-            <textarea name="rewrite" id="rewrite" rows="4"></textarea>
-            
-            <button type="submit">Submit</button>
-        </form>
-        
-        <form action="{{ url_for('annotate.reset') }}" method="get">
-            <button type="submit" class="reset-btn">Reset Annotations</button>
+            <div id="rewrite-section" class="hidden">
+                <label for="rewrite">If No, please rewrite:</label>
+                <textarea name="rewrite" id="rewrite" rows="4"></textarea>
+                <button type="submit" name="annotation" value="no">Submit</button>
+            </div>
+
+            <button type="submit" id="submit-btn" class="hidden">Submit</button>
         </form>
     </div>
+
+    <script>
+        document.getElementById('yes-btn').addEventListener('click', function() {
+        document.getElementById('annotation').value = 'yes';
+        document.getElementById('submit-btn').click();
+        });
+
+        document.getElementById('no-btn').addEventListener('click', function() {
+            document.getElementById('annotation').value = 'no';
+            document.getElementById('rewrite-section').classList.remove('hidden');
+        });
+
+        document.getElementById('skip-btn').addEventListener('click', function() {
+            document.getElementById('annotation').value = 'skip';
+            document.getElementById('submit-btn').click();
+        });
+
+        document.getElementById('annotation-form').addEventListener('submit', function(event) {
+            const annotationValue = document.annotationForm.annotation.value;
+            if (annotationValue === 'no') {
+                const rewriteField = document.getElementById('rewrite').value;
+                if (!rewriteField.trim()) {
+                    event.preventDefault();
+                    alert('Rewrite field cannot be empty.');
+                }
+            }
+        });
+    </script>
 </body>
 </html>
