@@ -15,6 +15,7 @@ def test_connection():
             user=os.getenv("DB_USER"),
             password=os.getenv("DB_PASSWORD")
         )
+        print(f"Connection established to {os.getenv('DB_NAME')} ({os.getenv('DB_HOST')})")
         cursor = connection.cursor()
         cursor.execute("SELECT version();")
         db_version = cursor.fetchone()
@@ -48,7 +49,7 @@ def select_all_pairs(schema='unlabeled'):
             connection.close()
 
 def main():
-    #test_connection()
+    test_connection()
     select_all_pairs()
 
 if __name__ == '__main__':
