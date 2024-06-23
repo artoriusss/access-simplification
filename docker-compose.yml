@@ -1,0 +1,25 @@
+version: '3'
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3003:3003"
+    volumes:
+      - .:/app
+    environment:
+      - PYTHONPATH=/app  # Set the PYTHONPATH environment variable
+    command: ["conda", "run", "--no-capture-output", "-n", "ts", "python", "api/app.py"]
+
+  test:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - .:/app
+    environment:
+      - PYTHONPATH=/app  # Set the PYTHONPATH environment variable
+      - COMPLEX_SENTENCE=This is a complex sentence to be simplified.
+      - CONTINUE=n
+    command: ["conda", "run", "--no-capture-output", "-n", "ts", "python", "api/inference/simplify.py"]
