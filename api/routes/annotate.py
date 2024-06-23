@@ -1,4 +1,4 @@
-from flask import Blueprint, request, render_template, redirect, url_for, session
+from flask import Blueprint, request, render_template, redirect, url_for
 
 from db.connect import query
 from services.db_service import write_sentence_pairs
@@ -8,9 +8,6 @@ annotate_bp = Blueprint('annotate', __name__)
 
 @annotate_bp.route('/annotate', methods=['GET', 'POST'])
 def annotate():
-    if 'index' not in session:
-        session['index'] = 0
-
     if request.method == 'POST':
         id_ = request.form['_id']
         original = request.form['original']
@@ -28,16 +25,14 @@ def annotate():
             write_sentence_pairs(pairs, labeled=True)
         
         delete_unlabeled_row(id_)
-
-        session['index'] += 1
         return redirect(url_for('annotate.annotate'))
 
     unlabeled_data = query()
     
-    if not unlabeled_data or session['index'] >= len(unlabeled_data):
+    if not unlabeled_data: 
         return "No more data to annotate."
     
-    pair = unlabeled_data[session['index']]
+    pair = unlabeled_data[0]
     original = pair['original']
     simplified = pair['simplified']
     id_ = pair['id']
@@ -46,5 +41,4 @@ def annotate():
 
 @annotate_bp.route('/reset')
 def reset():
-    session.pop('index', None)
     return redirect(url_for('annotate.annotate'))
