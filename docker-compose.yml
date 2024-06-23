@@ -9,7 +9,7 @@ services:
     volumes:
       - .:/app
     environment:
-      - PYTHONPATH=/app  # Set the PYTHONPATH environment variable
+      - PYTHONPATH=/app  
     command: ["conda", "run", "--no-capture-output", "-n", "ts", "python", "api/app.py"]
 
   test:
@@ -19,7 +19,7 @@ services:
     volumes:
       - .:/app
     environment:
-      - PYTHONPATH=/app  # Set the PYTHONPATH environment variable
+      - PYTHONPATH=/app  
       - COMPLEX_SENTENCE=This is a complex sentence to be simplified.
       - CONTINUE=n
     command: ["conda", "run", "--no-capture-output", "-n", "ts", "python", "api/inference/simplify.py"]

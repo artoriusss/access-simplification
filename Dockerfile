@@ -17,7 +17,7 @@ RUN mamba env create -f environment.yml && conda clean --all
 SHELL ["conda", "run", "-n", "ts", "/bin/bash", "-c"]
 
 COPY requirements_.txt .
-RUN conda run -n ts pip install --no-cache-dir -r requirements_.txt
+RUN conda run -n ts pip install --no-cache-dir -r requirements.txt
 RUN conda run -n ts python -m nltk.downloader perluniprops
 RUN conda run -n ts python -m nltk.downloader stopwords
 
