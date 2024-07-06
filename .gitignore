@@ -11,3 +11,4 @@ labelled
 logs
 .DS_Store
 gcs_credentials.jsonairflow/configs/gcs_credentials.json
+gcs_credentials.json
