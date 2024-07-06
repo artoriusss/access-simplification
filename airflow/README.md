@@ -21,3 +21,8 @@ This directory contains the setup of an Apache Airflow DAG pipeline designed to 
 
 ### 5. Delete Processed Records
 - Deletes the records that were fetched from the database to prevent duplicate processing in future runs.
+
+**<h2 style="text-align: center;">Pipeline Diagram</p>**
+
+![image](airflow-scheme.png)
+
