@@ -6,3 +6,5 @@
 .pytest_cache
 .nfs*
 experiments
+.DS_Store
+logs
