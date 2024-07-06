@@ -8,3 +8,5 @@
 experiments
 unlabelled
 labelled
+logs
+.DS_Store
