@@ -9,3 +9,5 @@ experiments
 unlabelled
 labelled
 mlruns
+.DS_Store
+logs
