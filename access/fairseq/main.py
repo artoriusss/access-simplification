@@ -7,7 +7,7 @@
 
 from collections import defaultdict
 from functools import lru_cache
-import shutil
+import shutil, json
 
 from nevergrad.instrumentation import Instrumentation
 from nevergrad.optimization import optimizerlib
@@ -26,6 +26,11 @@ from access.utils.training import (print_method_name, print_args, print_result, 
                                    )
 from access.utils.helpers import get_allowed_kwargs
 
+from access.resources.paths import BEST_MODEL_DIR
+from pathlib import Path
+
+import mlflow
+
 
 def check_dataset(dataset):
     # Sanity check with evaluation dataset
@@ -37,11 +42,17 @@ def check_dataset(dataset):
 
 def prepare_exp_dir():
     exp_dir = get_fairseq_exp_dir()
+    print(f"Preparing experiment directory: {exp_dir}")
     if exp_dir.exists():
-        # Remove exp dir to prevent conflicts with requeue and non deterministic args
-        # https://github.com/fairinternal/dfoptim/issues/126 #private
+        print(f"Removing existing experiment directory: {exp_dir}")
         shutil.rmtree(exp_dir)
     exp_dir.mkdir(parents=True)
+    # Path to existing dictionaries
+    dict_dir = BEST_MODEL_DIR
+    print(f"Copying dictionary files from {dict_dir} to {exp_dir}")
+    if dict_dir.exists():
+        shutil.copy(dict_dir / 'dict.complex.txt', exp_dir)
+        shutil.copy(dict_dir / 'dict.simple.txt', exp_dir)
     return exp_dir
 
 
@@ -129,3 +140,113 @@ def fairseq_train_and_evaluate(dataset, metrics_coefs=[1, 1, 1], parametrization
     print(f'scores={scores}')
     score = combine_metrics(scores['BLEU'], scores['SARI'], scores['FKGL'], metrics_coefs)
     return score
+
+@print_method_name
+@print_args
+@print_result
+@print_running_time
+def track_fairseq_train_and_evaluate(dataset, metrics_coefs=[1, 1, 1], parametrization_budget=64, **kwargs):
+    with mlflow.start_run():
+        print("Starting MLFlow run...")
+        
+        # Log simple parameters
+        mlflow.log_param('dataset', dataset)
+        for key, value in kwargs.items():
+            if key != 'preprocessors_kwargs':
+                mlflow.log_param(key, value)
+        
+        print("Logged parameters...")
+        
+        # Serialize and log preprocessors_kwargs as an artifact
+        preprocessors_kwargs = kwargs.get('preprocessors_kwargs', {})
+        preprocessors_kwargs_path = 'preprocessors_kwargs.json'
+        with open(preprocessors_kwargs_path, 'w') as f:
+            json.dump(preprocessors_kwargs, f)
+        mlflow.log_artifact(preprocessors_kwargs_path)
+        
+        print("Logged preprocessors kwargs as artifact...")
+        
+        check_dataset(dataset)
+        kwargs = check_and_resolve_args(kwargs)
+        exp_dir = prepare_exp_dir()
+        preprocessors = get_preprocessors(preprocessors_kwargs)
+        
+        if len(preprocessors) > 0:
+            dataset = create_preprocessed_dataset(dataset, preprocessors, n_jobs=1)
+            shutil.copy(get_dataset_dir(dataset) / 'preprocessors.pickle', exp_dir)
+            mlflow.log_artifact(get_dataset_dir(dataset) / 'preprocessors.pickle')  # Log artifact
+        
+        preprocessed_dir = fairseq_preprocess(dataset)
+        train_kwargs = get_allowed_kwargs(fairseq_train, preprocessed_dir, exp_dir, **kwargs)
+        
+        print("Starting fairseq training...")
+        
+        fairseq_train(preprocessed_dir, exp_dir=exp_dir, **train_kwargs)
+
+        # Evaluation
+        generate_kwargs = get_allowed_kwargs(fairseq_generate, 'complex_filepath', 'pred_filepath', exp_dir, **kwargs)
+        recommended_preprocessors_kwargs = find_best_parametrization(exp_dir, metrics_coefs, preprocessors_kwargs, parametrization_budget)
+        print(f'recommended_preprocessors_kwargs={recommended_preprocessors_kwargs}')
+        
+        # Serialize and log recommended preprocessors kwargs
+        recommended_preprocessors_kwargs_path = 'recommended_preprocessors_kwargs.json'
+        with open(recommended_preprocessors_kwargs_path, 'w') as f:
+            json.dump(recommended_preprocessors_kwargs, f)
+        mlflow.log_artifact(recommended_preprocessors_kwargs_path)
+        
+        simplifier = get_simplifier(exp_dir, recommended_preprocessors_kwargs, generate_kwargs)
+        scores = evaluate_simplifier_on_turkcorpus(simplifier, phase='valid')
+        print(f'scores={scores}')
+        
+        # Log metrics
+        mlflow.log_metrics(scores)
+        
+        print("Logged metrics...")
+
+        score = combine_metrics(scores['BLEU'], scores['SARI'], scores['FKGL'], metrics_coefs)
+        return score
+
+# TODO: IMPLEMENT THE FUNCTION
+# def fairseq_train_from_checkpoint(dataset, metrics_coefs=[1, 1, 1], parametrization_budget=64, **kwargs):
+#     check_dataset(dataset)
+#     kwargs = check_and_resolve_args(kwargs)
+#     #exp_dir = prepare_exp_dir()
+#     exp_dir = Path('/home/artorius/projects/access-simplification/experiments/fairseq/local_1720370446720')
+#     preprocessors_kwargs = kwargs.get('preprocessors_kwargs', {})
+#     # print(f"Preprocessor kwargs: {preprocessors_kwargs}")
+#     # preprocessors = get_preprocessors(preprocessors_kwargs)
+#     # if len(preprocessors) > 0:
+#     #     dataset = create_preprocessed_dataset(dataset, preprocessors, n_jobs=1)
+#     #     shutil.copy(get_dataset_dir(dataset) / 'preprocessors.pickle', exp_dir)
+#     # print("Running fairseq_preprocess...")
+#     # preprocessed_dir = fairseq_preprocess(dataset, exp_dir)  # Ensure exp_dir is passed
+#     preprocessed_dir = Path('/home/artorius/projects/access-simplification/resources/datasets/_2912c535c2343258d2e6375bca3e3a3d/fairseq_preprocessed')
+#     print(f"Preprocessed data directory: {preprocessed_dir}")
+#     train_kwargs = get_allowed_kwargs(fairseq_train, preprocessed_dir, exp_dir, **kwargs)
+#     print(f"Training with arguments: {train_kwargs}")
+
+#     best_checkpoint_path = BEST_MODEL_DIR / 'checkpoints/checkpoint_best.pt'
+#     if best_checkpoint_path.exists():
+#         resume_from_checkpoint = str(best_checkpoint_path)
+#         print(f"Resuming from checkpoint: {resume_from_checkpoint}")
+#     else:
+#         resume_from_checkpoint = None
+#         print("No checkpoint found. Training from scratch.")
+
+#     print(f"Complex dictionary size: {len(open(exp_dir / 'dict.complex.txt').readlines())} tokens")
+#     print(f"Simple dictionary size: {len(open(exp_dir / 'dict.simple.txt').readlines())} tokens")
+
+#     max_epoch = kwargs.get('max_epoch', 200)
+#     print(f"Starting/Continuing training for a maximum of {max_epoch} epochs.")
+
+#     fairseq_train(preprocessed_dir, exp_dir=exp_dir, resume_from_checkpoint=resume_from_checkpoint, **train_kwargs)
+    
+#     generate_kwargs = get_allowed_kwargs(fairseq_generate, 'complex_filepath', 'pred_filepath', exp_dir, **kwargs)
+#     recommended_preprocessors_kwargs = find_best_parametrization(exp_dir, metrics_coefs, preprocessors_kwargs,
+#                                                                  parametrization_budget)
+#     print(f'Recommended preprocessors kwargs: {recommended_preprocessors_kwargs}')
+#     simplifier = get_simplifier(exp_dir, recommended_preprocessors_kwargs, generate_kwargs)
+#     scores = evaluate_simplifier_on_turkcorpus(simplifier, phase='valid')
+#     print(f'Evaluation scores: {scores}')
+#     score = combine_metrics(scores['BLEU'], scores['SARI'], scores['FKGL'], metrics_coefs)
+#     return score
