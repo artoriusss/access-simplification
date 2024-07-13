@@ -15,7 +15,8 @@ import tempfile
 import time
 
 from fairseq import options
-from fairseq_cli import preprocess, train, generate
+from fairseq_cli import preprocess, generate
+from access.fairseq import train
 
 from access.resources.paths import get_dataset_dir, EXP_DIR
 from access.utils.helpers import (log_stdout, lock_directory, create_directory_or_skip, yield_lines,

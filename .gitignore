@@ -11,3 +11,4 @@ labelled
 mlruns
 .DS_Store
 logs
+mlflow-test

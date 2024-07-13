@@ -5,15 +5,17 @@
 # LICENSE file in the root directory of this source tree.
 #
 
-from access.fairseq.main import fairseq_train_and_evaluate, track_fairseq_train_and_evaluate
+from access.fairseq.main import fairseq_train_and_evaluate
 from access.resources.prepare import prepare_wikilarge, prepare_turkcorpus
 import mlflow
 
+from access.fairseq.main import main
+
 
 if __name__ == '__main__':
-    print('Training a model from scratch')
-    prepare_wikilarge()
-    prepare_turkcorpus()
+    # print('Training a model from scratch')
+    # prepare_wikilarge()
+    # prepare_turkcorpus()
     kwargs = {
         'arch': 'transformer',
         'warmup_updates': 4000,
@@ -25,7 +27,7 @@ if __name__ == '__main__':
         'label_smoothing': 0.54,
         'lr': 0.00011,
         'lr_scheduler': 'fixed',
-        'max_epoch': 200,
+        'max_epoch': 7,
         'max_tokens': 5000,
         'metrics_coefs': [0, 1, 0],
         'optimizer': 'adam',
@@ -47,8 +49,9 @@ if __name__ == '__main__':
             }
         }
     }
+    main(**kwargs)
     
     # Ensure MLFlow experiment is set
-    mlflow.set_experiment('fairseq_experiment')
+    # mlflow.set_experiment('fairseq_experiment')
     
-    track_fairseq_train_and_evaluate(**kwargs)
+    # fairseq_train_and_evaluate(**kwargs)

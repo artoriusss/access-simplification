@@ -29,8 +29,7 @@ from access.utils.helpers import get_allowed_kwargs
 from access.resources.paths import BEST_MODEL_DIR
 from pathlib import Path
 
-import mlflow
-
+#import mlflow 
 
 def check_dataset(dataset):
     # Sanity check with evaluation dataset
@@ -70,7 +69,8 @@ def find_best_parametrization(exp_dir, metrics_coefs, preprocessors_kwargs, para
         preprocessors_kwargs = instru_kwargs_to_preprocessors_kwargs(instru_kwargs)
         simplifier = get_simplifier(exp_dir, preprocessors_kwargs=preprocessors_kwargs, generate_kwargs={})
         scores = evaluate_simplifier_on_turkcorpus(simplifier, phase='valid')
-        return combine_metrics(scores['BLEU'], scores['SARI'], scores['FKGL'], metrics_coefs)
+        print(scores)
+        return combine_metrics(scores['bleu'], scores['sari_legacy'], scores['fkgl'], metrics_coefs)
 
     def preprocessors_kwargs_to_instru_kwargs(preprocessors_kwargs):
         instru_kwargs = {}
@@ -119,89 +119,46 @@ def check_and_resolve_args(kwargs):
 @print_result
 @print_running_time
 def fairseq_train_and_evaluate(dataset, metrics_coefs=[1, 1, 1], parametrization_budget=64, **kwargs):
-    check_dataset(dataset)
-    kwargs = check_and_resolve_args(kwargs)
-    exp_dir = prepare_exp_dir()
-    preprocessors_kwargs = kwargs.get('preprocessors_kwargs', {})
-    preprocessors = get_preprocessors(preprocessors_kwargs)
-    if len(preprocessors) > 0:
-        dataset = create_preprocessed_dataset(dataset, preprocessors, n_jobs=1)
-        shutil.copy(get_dataset_dir(dataset) / 'preprocessors.pickle', exp_dir)
-    preprocessed_dir = fairseq_preprocess(dataset)
-    train_kwargs = get_allowed_kwargs(fairseq_train, preprocessed_dir, exp_dir, **kwargs)
-    fairseq_train(preprocessed_dir, exp_dir=exp_dir, **train_kwargs)
-    # Evaluation
-    generate_kwargs = get_allowed_kwargs(fairseq_generate, 'complex_filepath', 'pred_filepath', exp_dir, **kwargs)
-    recommended_preprocessors_kwargs = find_best_parametrization(exp_dir, metrics_coefs, preprocessors_kwargs,
-                                                                 parametrization_budget)
-    print(f'recommended_preprocessors_kwargs={recommended_preprocessors_kwargs}')
-    simplifier = get_simplifier(exp_dir, recommended_preprocessors_kwargs, generate_kwargs)
-    scores = evaluate_simplifier_on_turkcorpus(simplifier, phase='valid')
-    print(f'scores={scores}')
-    score = combine_metrics(scores['BLEU'], scores['SARI'], scores['FKGL'], metrics_coefs)
-    return score
+    print("Starting MLFlow run...")
 
-@print_method_name
-@print_args
-@print_result
-@print_running_time
-def track_fairseq_train_and_evaluate(dataset, metrics_coefs=[1, 1, 1], parametrization_budget=64, **kwargs):
+    # MLFlow: set tracking URI and experiment
+    mlflow.set_tracking_uri("http://34.118.112.8:3003")
+    mlflow.set_experiment("fairseq_access")
+    
     with mlflow.start_run():
-        print("Starting MLFlow run...")
-        
-        # Log simple parameters
-        mlflow.log_param('dataset', dataset)
-        for key, value in kwargs.items():
-            if key != 'preprocessors_kwargs':
-                mlflow.log_param(key, value)
-        
-        print("Logged parameters...")
-        
-        # Serialize and log preprocessors_kwargs as an artifact
-        preprocessors_kwargs = kwargs.get('preprocessors_kwargs', {})
-        preprocessors_kwargs_path = 'preprocessors_kwargs.json'
-        with open(preprocessors_kwargs_path, 'w') as f:
-            json.dump(preprocessors_kwargs, f)
-        mlflow.log_artifact(preprocessors_kwargs_path)
-        
-        print("Logged preprocessors kwargs as artifact...")
-        
         check_dataset(dataset)
         kwargs = check_and_resolve_args(kwargs)
-        exp_dir = prepare_exp_dir()
+        exp_dir = prepare_exp_dir()        
+        preprocessors_kwargs = kwargs.get('preprocessors_kwargs', {})
         preprocessors = get_preprocessors(preprocessors_kwargs)
-        
         if len(preprocessors) > 0:
             dataset = create_preprocessed_dataset(dataset, preprocessors, n_jobs=1)
             shutil.copy(get_dataset_dir(dataset) / 'preprocessors.pickle', exp_dir)
-            mlflow.log_artifact(get_dataset_dir(dataset) / 'preprocessors.pickle')  # Log artifact
-        
         preprocessed_dir = fairseq_preprocess(dataset)
         train_kwargs = get_allowed_kwargs(fairseq_train, preprocessed_dir, exp_dir, **kwargs)
-        
-        print("Starting fairseq training...")
-        
-        fairseq_train(preprocessed_dir, exp_dir=exp_dir, **train_kwargs)
 
+        # MLFlow: log dictionaries and preprocessors
+        mlflow.log_artifact(exp_dir)
+
+        fairseq_train(preprocessed_dir, exp_dir=exp_dir, **train_kwargs)
         # Evaluation
         generate_kwargs = get_allowed_kwargs(fairseq_generate, 'complex_filepath', 'pred_filepath', exp_dir, **kwargs)
-        recommended_preprocessors_kwargs = find_best_parametrization(exp_dir, metrics_coefs, preprocessors_kwargs, parametrization_budget)
+        recommended_preprocessors_kwargs = find_best_parametrization(exp_dir, metrics_coefs, preprocessors_kwargs,
+                                                                    parametrization_budget)
         print(f'recommended_preprocessors_kwargs={recommended_preprocessors_kwargs}')
-        
-        # Serialize and log recommended preprocessors kwargs
-        recommended_preprocessors_kwargs_path = 'recommended_preprocessors_kwargs.json'
-        with open(recommended_preprocessors_kwargs_path, 'w') as f:
-            json.dump(recommended_preprocessors_kwargs, f)
-        mlflow.log_artifact(recommended_preprocessors_kwargs_path)
-        
         simplifier = get_simplifier(exp_dir, recommended_preprocessors_kwargs, generate_kwargs)
         scores = evaluate_simplifier_on_turkcorpus(simplifier, phase='valid')
         print(f'scores={scores}')
-        
-        # Log metrics
-        mlflow.log_metrics(scores)
-        
-        print("Logged metrics...")
-
-        score = combine_metrics(scores['BLEU'], scores['SARI'], scores['FKGL'], metrics_coefs)
+        score = combine_metrics(scores['bleu'], scores['sari_legacy'], scores['fkgl'], metrics_coefs)
         return score
+
+def main(**kwargs):
+    kwargs = check_and_resolve_args(kwargs)
+    exp_dir = 'experiments/fairseq/local_1720871882304'
+    metrics_coefs = [1, 1, 1]
+    parametrization_budget = 64
+    preprocessors_kwargs = kwargs.get('preprocessors_kwargs', {})
+    print(find_best_parametrization(exp_dir, metrics_coefs, preprocessors_kwargs, parametrization_budget))
+
+if __name__ == '__main__':
+    main()
