@@ -24,7 +24,7 @@ if __name__ == '__main__':
         'label_smoothing': 0.54,
         'lr': 0.00011,
         'lr_scheduler': 'fixed',
-        'max_epoch': 7,
+        'max_epoch': 12,
         'max_tokens': 5000,
         'metrics_coefs': [0, 1, 0],
         'optimizer': 'adam',
@@ -47,7 +47,6 @@ if __name__ == '__main__':
         }
     }
     
-    # MLflow: Set experiment name
+    #MLflow: Set experiment name
     mlflow.set_experiment('fairseq_experiment')
-    
     fairseq_train_and_evaluate(**kwargs)

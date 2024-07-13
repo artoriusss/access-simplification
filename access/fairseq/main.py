@@ -29,7 +29,7 @@ from access.utils.helpers import get_allowed_kwargs
 from access.resources.paths import BEST_MODEL_DIR
 from pathlib import Path
 
-#import mlflow 
+import mlflow 
 
 def check_dataset(dataset):
     # Sanity check with evaluation dataset
@@ -143,22 +143,11 @@ def fairseq_train_and_evaluate(dataset, metrics_coefs=[1, 1, 1], parametrization
         fairseq_train(preprocessed_dir, exp_dir=exp_dir, **train_kwargs)
         # Evaluation
         generate_kwargs = get_allowed_kwargs(fairseq_generate, 'complex_filepath', 'pred_filepath', exp_dir, **kwargs)
-        recommended_preprocessors_kwargs = find_best_parametrization(exp_dir, metrics_coefs, preprocessors_kwargs,
-                                                                    parametrization_budget)
-        print(f'recommended_preprocessors_kwargs={recommended_preprocessors_kwargs}')
-        simplifier = get_simplifier(exp_dir, recommended_preprocessors_kwargs, generate_kwargs)
+        # recommended_preprocessors_kwargs = find_best_parametrization(exp_dir, metrics_coefs, preprocessors_kwargs,
+        #                                                             parametrization_budget)
+        # print(f'recommended_preprocessors_kwargs={recommended_preprocessors_kwargs}')
+        simplifier = get_simplifier(exp_dir, preprocessors_kwargs, generate_kwargs)
         scores = evaluate_simplifier_on_turkcorpus(simplifier, phase='valid')
         print(f'scores={scores}')
         score = combine_metrics(scores['bleu'], scores['sari_legacy'], scores['fkgl'], metrics_coefs)
         return score
-
-def main(**kwargs):
-    kwargs = check_and_resolve_args(kwargs)
-    exp_dir = 'experiments/fairseq/local_1720871882304'
-    metrics_coefs = [1, 1, 1]
-    parametrization_budget = 64
-    preprocessors_kwargs = kwargs.get('preprocessors_kwargs', {})
-    print(find_best_parametrization(exp_dir, metrics_coefs, preprocessors_kwargs, parametrization_budget))
-
-if __name__ == '__main__':
-    main()
