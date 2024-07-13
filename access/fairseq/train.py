@@ -192,16 +192,6 @@ def train(args, trainer, task, epoch_itr):
             print(f"Error logging metrics to MLFlow: {e}")
             print(num_stats)
 
-        # if i == 100:
-        #     print("Validating at step 100!")
-        #     valid_losses = sari_validate(args, trainer, task, epoch_itr, [first_valid])
-        #     save_checkpoint(args, trainer, epoch_itr, valid_losses)
-
-        #     # MLFlow: Log checkpoints 
-        #     mlflow.log_artifact(args.save_dir + '/checkpoint_best.pt')
-        #     mlflow.log_artifact(args.save_dir + '/checkpoint_last.pt')
-        #     print("Checkpoint saved at step 100")
-
         # ignore the first mini-batch in words-per-second calculation
         if i == 0:
             trainer.get_meter('wps').reset()

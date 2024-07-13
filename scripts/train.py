@@ -9,13 +9,10 @@ from access.fairseq.main import fairseq_train_and_evaluate
 from access.resources.prepare import prepare_wikilarge, prepare_turkcorpus
 import mlflow
 
-from access.fairseq.main import main
-
-
 if __name__ == '__main__':
-    # print('Training a model from scratch')
-    # prepare_wikilarge()
-    # prepare_turkcorpus()
+    print('Training a model from scratch')
+    prepare_wikilarge()
+    prepare_turkcorpus()
     kwargs = {
         'arch': 'transformer',
         'warmup_updates': 4000,
@@ -49,9 +46,8 @@ if __name__ == '__main__':
             }
         }
     }
-    main(**kwargs)
     
-    # Ensure MLFlow experiment is set
-    # mlflow.set_experiment('fairseq_experiment')
+    # MLflow: Set experiment name
+    mlflow.set_experiment('fairseq_experiment')
     
-    # fairseq_train_and_evaluate(**kwargs)
+    fairseq_train_and_evaluate(**kwargs)
