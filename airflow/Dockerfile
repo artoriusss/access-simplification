@@ -1,23 +1,31 @@
+# Use the official Apache Airflow image
 FROM apache/airflow:2.5.1
 
+# Set environment variables
+ENV AIRFLOW_HOME=/opt/airflow
+
+# Switch to root user temporarily to create directories and set permissions
 USER root
-RUN apt-get update && apt-get install -y \
-    python3-pip \
-    libpq-dev \
-    gcc \
-    build-essential
+RUN mkdir -p ${AIRFLOW_HOME}/dags ${AIRFLOW_HOME}/logs ${AIRFLOW_HOME}/plugins ${AIRFLOW_HOME}/configs
 
+# Copy the necessary files
+COPY dags/ ${AIRFLOW_HOME}/dags/
+COPY configs/ ${AIRFLOW_HOME}/configs/
+COPY plugins/ ${AIRFLOW_HOME}/plugins/
+COPY requirements.txt ${AIRFLOW_HOME}/requirements.txt
+COPY README.md ${AIRFLOW_HOME}/README.md
+COPY airflow-scheme.png ${AIRFLOW_HOME}/airflow-scheme.png
+COPY entrypoint.sh /entrypoint.sh
+
+# Make the entrypoint script executable
+RUN chmod +x /entrypoint.sh
+
+# Switch to the airflow user to install Python dependencies
 USER airflow
-RUN pip install --no-cache-dir \
-    pandas \
-    apache-airflow-providers-google \
-    google-cloud-storage
+RUN pip install --no-cache-dir -r ${AIRFLOW_HOME}/requirements.txt
 
-RUN pip install --no-cache-dir --no-binary :all: psycopg2
+# Set the entry point to our script
+ENTRYPOINT ["/entrypoint.sh"]
 
-COPY dags /opt/airflow/dags
-COPY plugins /opt/airflow/plugins
-COPY requirements.txt /requirements.txt
-
-RUN pip install --no-cache-dir -r /requirements.txt
-RUN mkdir -p /opt/airflow/logs /opt/airflow/dags /opt/airflow/plugins
+# Default command to run the webserver
+CMD ["airflow", "webserver"]

@@ -1,25 +1,26 @@
-version: '3'
+version: "3.8"
+
 services:
-  app:
+  api:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: api/Dockerfile
     ports:
       - "3003:3003"
     volumes:
-      - .:/app
+      - ./api:/app  # Mount ./api to /app inside the container
     environment:
       - PYTHONPATH=/app  
-    command: ["conda", "run", "--no-capture-output", "-n", "ts", "python", "api/app.py"]
+    command: ["conda", "run", "--no-capture-output", "-n", "ts", "python", "/app/app.py"]
 
   test:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: api/Dockerfile
     volumes:
-      - .:/app
+      - ./api:/app  # Mount ./api to /app inside the container
     environment:
       - PYTHONPATH=/app  
       - COMPLEX_SENTENCE=This is a complex sentence to be simplified.
       - CONTINUE=n
-    command: ["conda", "run", "--no-capture-output", "-n", "ts", "python", "api/inference/simplify.py"]
+    command: ["conda", "run", "--no-capture-output", "-n", "ts", "python", "/app/inference/simplify.py"]
