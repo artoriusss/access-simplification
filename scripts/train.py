@@ -3,7 +3,6 @@
 #
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
-#
 
 from access.fairseq.main import fairseq_train_and_evaluate
 from access.resources.prepare import prepare_wikilarge, prepare_turkcorpus

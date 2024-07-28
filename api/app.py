@@ -13,7 +13,7 @@ app.register_blueprint(annotate_bp)
 app.register_blueprint(simplify_bp)
 
 def main():
-    app.run(host='0.0.0.0', port=3003)
+    app.run(host='0.0.0.0', port=3003) # run app in debug mode on port 3003
 
 if __name__ == '__main__':
     main()
